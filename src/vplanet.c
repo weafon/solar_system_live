@@ -183,7 +183,7 @@ static double parseDeg(const char *dec)
     if ((strchr(dec, 'd') != NULL) ||
         (strchr(dec, 'D') != NULL) ||
         (strchr(dec, ' ') != NULL) ||
-        (strchr(dec, '°') != NULL)) {
+        (strchr(dec, 0x248) != NULL)) { // replace 'Â°' with 0x248 based on the ascii table to avoid from the multi-char issue
         double dd = 0, mm = 0, ss = 0;
         char c1, c2;
 
@@ -1801,7 +1801,8 @@ DB(cp);
         errors in rendering code.  */
 
 #ifdef TimeLimit
-    sigset(SIGALRM, (void (*)()) dingaling);
+    //sigset(SIGALRM, (void (*)()) dingaling); // sigset has been deprecated.
+    signal(SIGALRM, dingaling); 
     alarm(TimeLimit);
 #endif
 
