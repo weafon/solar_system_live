@@ -53,6 +53,7 @@ check: FORCE
 	rm -rf regress/cache
 	@echo All regression tests passed.
 
+
 vplanet.o:  vplanet.c vplanet.h
 
 astro.o:    astro.c vplanet.h

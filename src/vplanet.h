@@ -200,6 +200,7 @@ extern void uncgi(void);
 /* From planetp.c */
 
 extern void updatePlanet(double jd, int normal, FILE *ofile, char *obSite);
+extern void updatePlanet1(int i, double jd, int normal, FILE *ofile, char *obSite);
 extern void calcPlanet(double jd);
 extern void buildPlanets(const double jd);
 

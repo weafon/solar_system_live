@@ -23,8 +23,9 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
-
-double siteLat = 47.0, siteLon = -7.0;
+double jt_start = 0;
+//double siteLat = 47.0, siteLon = -7.0;
+double siteLat = 25, siteLon = 121;
 char orbitalElements[maxOrbitalElements][132];        /* Elements of body being tracked */
 char savedOrbitalElements[maxOrbitalElements][132];   /* Elements submitted with dynamic request */
 char *progpath;                       /* Program invocation path (argv[0]) */
@@ -1111,7 +1112,8 @@ static void writepost(FILE *fp, const double vlat, const double vlon, const doub
 
 /* Main program. */
 
-int main(int argc, char **argv)
+
+int oldmain(int argc, char **argv)
 {
     double vlat, vlon, valt,
            tlat = 0, tlon = 0, talt = 35785;
@@ -2011,3 +2013,186 @@ printf("</pre>\n");
 #endif
     return 0;
 }
+
+void print_on_jt(double jt, int i)
+{
+/*
+   static char *mname[12] = {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+        "Nov", "Dec" };
+*/        
+//   double vlat, vlon, valt;
+//    double tlat = 0, tlon = 0, talt = 35785;
+    long yy;
+    int mm,dd;
+    sunpos(jt, TRUE, &sunra, &sundec, &earthrv, &sunlong);
+    earthlong = sunlong + 180;
+/*    
+    gt = gmst(jt);
+    tlat = dtr(siteLat);
+    tlon = dtr(siteLon);
+    vlat = tlat;
+    vlon = tlon;
+    valt = talt;
+    if (valt != talt)
+        printf("dummy");
+*/        
+    //printf("View from %s\n", edvpos(vlat, vlon));
+
+    /* Calculate positions of objects at the requested epoch. */
+/*
+    static char *plnames[] = {"Sun", "Mercury", "Venus", "Moon",
+                              "Mars", "Jupiter", "Saturn", "Uranus",
+                              "Neptune", "Pluto", "?"};
+*/
+    buildPlanets(jt);  
+//    static char *weekdays[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+
+//    printf("vlat %lf vlon %lf valt %lf\n", vlat, vlon, valt);   
+    jyear(jt, &yy,&mm,&dd);
+//    printf("%3d %8.2lf %ld/%d/%d: long %3.1lf lat %3.1lf,long %3.1lf lat %3.1lf\n",i, jt,yy,mm,dd,
+//        planet_info[5].hlong, planet_info[5].hlat, planet_info[4].hlong, planet_info[4].dist);
+    printf("%3d %8.2lf %ld/%d/%d: Mars %3.1lf jup: %3.1lf sat: %3.1lf\n",i, jt,yy,mm,dd,
+        planet_info[4].hlong, planet_info[5].hlong, planet_info[6].hlong);
+
+
+    //updatePlanet1(5, jt, TRUE, stdout, edvpos(vlat, vlon));        
+//    updatePlanet1(6, jt, TRUE, stdout, edvpos(vlat, vlon));        
+//    updatePlanet(jt, TRUE, stdout, edvpos(vlat, vlon)); 
+    //writepost(stdout, vlat, vlon, valt, imagesource, innersystem,
+     //       orbittype,
+      //      tmsize, jt);        
+    
+}
+
+double calcmoon(double jt, double *pa, double *pb, double *pc)
+{
+
+    double vlat, vlon;
+    double tlat = 0, tlon = 0;
+
+    sunpos(jt, TRUE, &sunra, &sundec, &earthrv, &sunlong);
+    earthlong = sunlong + 180;
+    buildPlanets(jt);  
+    tlat = dtr(siteLat);
+    tlon = dtr(siteLon);
+    vlat = tlat;
+    vlon = tlon;    
+    updatePlanet1(3, jt, TRUE, stdout, edvpos(vlat,vlon));
+    return 0.0;
+}
+
+double calc_internal(double jt, double *pa, double *pb, double *pc, int isTrue)
+{
+//    double a,b,c;//,d;
+    long yy;
+    int mm,dd;
+
+    double d, md, mangdia, suangdia;
+    sunpos(jt, TRUE, &sunra, &sundec, &earthrv, &sunlong);
+    earthlong = sunlong + 180;
+
+    buildPlanets(jt);  
+    double rm = phase(jt, &d, &d, &md, &mangdia, &d, &suangdia);
+    jyear(jt, &yy,&mm, &dd);
+    double fix_earthlong = earthlong>360?earthlong-360:earthlong;
+    double diff = fabs(fix_earthlong - planet_info[1].hlong);
+    if ((360-diff)<diff)
+        diff = 360-diff;
+    //if ((diff>179)&&(diff<181))
+    //if (diff<2)
+    printf("%.2lf %.2lf %.2lf %.2lf %.2lf %.2lf %.2lf %.2lf %d\n",
+            fix_earthlong,earthrv,
+             planet_info[1].hlong,planet_info[1].hlat,
+             planet_info[2].hlong,planet_info[2].hlat,
+             rm*360,md, isTrue);
+
+//    printf("%.2lf %.2lf %.2lf %.2lf %d\n",
+ //           fix_earthlong, planet_info[1].hlong,planet_info[1].hlat, rm*360, isTrue);
+   // printf("%.2lf %.2lf %.2lf %d\n",
+     //       jt, fix_earthlong,  rm*360, isTrue);
+
+
+//    printf("%.1lf %d %ld/%d/%d: earth %.1lf water %.1lf / %.1lf %lf gold %.1lf / %.1lf\n",
+ //           jt, ((int)(jt-jt_start))%60, yy,mm,dd, fix_earthlong,
+  //           planet_info[1].hlong,planet_info[1].hlat,rm*360,
+   //          planet_info[2].hlong,planet_info[2].hlat);
+//        printf("%.1lf %ld/%d/%d: earth %.1lf water %.1lf gold %.1lf moon %.1lf\n",jt, yy,mm,dd, fix_earthlong
+//            , planet_info[1].hlong,planet_info[2].hlong,rm*360);
+    return 0.0;
+}
+
+
+double calcdiff(double jt, double *pa, double *pb, double *pc)
+{
+    double a,b,c;//,d;
+    sunpos(jt, TRUE, &sunra, &sundec, &earthrv, &sunlong);
+    earthlong = sunlong + 180;
+    buildPlanets(jt);  
+    
+    a= abs(planet_info[5].hlong-planet_info[6].hlong);
+    b= abs(planet_info[4].hlong-planet_info[5].hlong);
+    c= abs(planet_info[4].hlong-planet_info[6].hlong);
+    if ((360-a)<a) a=360-a;
+    if ((360-b)<b) b=360-b;
+    if ((360-c)<c) c=360-c;
+    //printf("%lf %lf %lf\n",a,b,c);
+    *pa = a; *pb = b; *pc = c;
+    return (a+b+c)/3;
+}
+
+int main(int argc, char **argv)
+{
+    int orbittype = 0;    
+    int innersystem = FALSE;
+//    char *di;    
+    //long cctime;
+    int i;
+//    static char *imagesource = "earth-topo.bmp";
+    progpath = argv[0];               /* Save path used to call us */
+
+    /*  Clear orbitalElements array.  */
+    for (i = 0; i < 8; i++) {
+        orbitalElements[i][0] = 0;
+    }    
+    orrInner = innersystem;
+    orrScale = orbittype;
+//    double ss=0;
+    double a,b,c;
+    int yy_start = 2025;
+    //jt = ucttoj(yy_start,0,1,12,0,0);
+    jt = ucttoj(yy_start,1,24,12,0,0);
+    jt_start = jt;
+    for(i=0;i<40000;i++)
+    {
+        //calcmoon(jt+i, &a, &b, &c);
+        calc_internal(jt-i, &a, &b, &c,(i%60==0)?1:0);
+        //printf("%d %lf\n",i,ss);
+    }
+
+/*
+    for(i=0;i<2000;i++)
+    {   
+        for(j=0;j<12;j+=1)
+        {
+            jt = ucttoj(yy_start+i,j,15,0,0,0);
+            ss = calcdiff(jt, &a, &b, &c);
+            printf("%d %d %lf ( %lf %lf %lf )\n",yy_start   +i,j,ss,a,b,c);
+
+        }
+    }
+*/    
+//    for(i=1984;i>600;i-=12)
+//    for(i=1984;i<2044;i++)
+/*
+    for(i=0;i<10;i++)
+    {
+        jt = ucttoj(1980+(i*20),4,15,18,0,0);
+        print_on_jt(jt,i);
+        if (i%5==4)
+            printf("\n");
+        //jt += 	365.256*12; 
+    }
+*/    
+}
+
